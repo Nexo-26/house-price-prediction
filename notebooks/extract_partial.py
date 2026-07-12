@@ -9,7 +9,7 @@ if os.path.exists(nb_path):
     partial_cells = []
     for cell in nb["cells"]:
         source_text = "".join(cell["source"])
-        if "## Phase 3" in source_text:
+        if "## Phase 7" in source_text:
             break
         partial_cells.append(cell)
 
@@ -18,6 +18,6 @@ if os.path.exists(nb_path):
     with open(nb_path, "w", encoding="utf-8") as f:
         json.dump(nb, f, indent=1)
 
-    print(f"Truncated notebook successfully. Retained {len(partial_cells)} cells (Phases 1 & 2).")
+    print(f"Truncated notebook successfully. Retained {len(partial_cells)} cells (Phases 1 to 6).")
 else:
     print(f"Error: {nb_path} not found.")
