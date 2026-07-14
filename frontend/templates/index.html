@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valuation AI — House Price Prediction Engine</title>
+    <meta name="description" content="Predict house market value with machine learning pipeline using XGBoost and CatBoost.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="background-decor">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+    </div>
+
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">VALUATION <span class="accent-text">AI</span></div>
+            <h1>House Price Prediction Engine</h1>
+            <p class="subtitle">An advanced machine learning pipeline using XGBoost to forecast residential property values based on historical Ames housing data.</p>
+        </header>
+
+        <main class="app-content">
+            <!-- Form Section -->
+            <section class="card form-card">
+                <h2 class="card-title">House Parameters</h2>
+                <form id="prediction-form" class="prediction-form">
+                    
+                    <!-- Section: Space & Area -->
+                    <div class="form-section">
+                        <h3><span class="step-num">1</span> Space & Dimension</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="GrLivArea">Above Ground Living Area (sq ft)</label>
+                                <input type="number" id="GrLivArea" name="GrLivArea" min="300" max="6000" value="1500" required>
+                                <span class="input-desc">Total finished living area above grade.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="TotalBsmtSF">Total Basement Area (sq ft)</label>
+                                <input type="number" id="TotalBsmtSF" name="TotalBsmtSF" min="0" max="6000" value="1000" required>
+                                <span class="input-desc">Total size of the basement.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="LotArea">Lot Size (sq ft)</label>
+                                <input type="number" id="LotArea" name="LotArea" min="500" max="200000" value="10000" required>
+                                <span class="input-desc">Acreage size of the land lot.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Age & Construction -->
+                    <div class="form-section">
+                        <h3><span class="step-num">2</span> Age & Construction</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="YearBuilt">Year Built</label>
+                                <input type="number" id="YearBuilt" name="YearBuilt" min="1870" max="2026" value="2000" required>
+                                <span class="input-desc">Original construction year.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="YearRemodAdd">Year Remodeled</label>
+                                <input type="number" id="YearRemodAdd" name="YearRemodAdd" min="1950" max="2026" value="2000" required>
+                                <span class="input-desc">Remodel date (same as built if no remodel).</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="Neighborhood">Neighborhood</label>
+                                <select id="Neighborhood" name="Neighborhood" required>
+                                    <option value="CollgCr" selected>College Creek (CollgCr)</option>
+                                    <option value="Veenker">Veenker (Veenker)</option>
+                                    <option value="Crawfor">Crawford (Crawfor)</option>
+                                    <option value="NoRidge">Northridge (NoRidge)</option>
+                                    <option value="Mitchel">Mitchell (Mitchel)</option>
+                                    <option value="Somerst">Somerset (Somerst)</option>
+                                    <option value="NWAmes">Northwest Ames (NWAmes)</option>
+                                    <option value="OldTown">Old Town (OldTown)</option>
+                                    <option value="BrkSide">Brookside (BrkSide)</option>
+                                    <option value="Sawyer">Sawyer (Sawyer)</option>
+                                    <option value="NridgHt">Northridge Heights (NridgHt)</option>
+                                    <option value="NAmes">North Ames (NAmes)</option>
+                                    <option value="SawyerW">Sawyer West (SawyerW)</option>
+                                    <option value="IDOTRR">Iowa DOT (IDOTRR)</option>
+                                    <option value="MeadowV">Meadow Village (MeadowV)</option>
+                                    <option value="Edwards">Edwards (Edwards)</option>
+                                    <option value="Timber">Timberland (Timber)</option>
+                                    <option value="Gilbert">Gilbert (Gilbert)</option>
+                                    <option value="StoneBr">Stone Brook (StoneBr)</option>
+                                    <option value="ClearCr">Clear Creek (ClearCr)</option>
+                                    <option value="NPkVill">North Park Villa (NPkVill)</option>
+                                    <option value="Blmngtn">Bloomington Heights (Blmngtn)</option>
+                                    <option value="BrDale">Briardale (BrDale)</option>
+                                    <option value="SWISU">South & West ISU (SWISU)</option>
+                                    <option value="Blueste">Bluestem (Blueste)</option>
+                                </select>
+                                <span class="input-desc">Geographical neighborhood location.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Quality & Amenities -->
+                    <div class="form-section">
+                        <h3><span class="step-num">3</span> Quality & Amenities</h3>
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label for="OverallQual">Overall Material and Finish Quality (1 - 10)</label>
+                                <div class="slider-container">
+                                    <input type="range" id="OverallQual" name="OverallQual" min="1" max="10" value="6" step="1">
+                                    <div class="slider-badge" id="qual-badge">6 / 10</div>
+                                </div>
+                                <span class="input-desc">Rates overall materials/finish (1: Very Poor, 5: Average, 10: Very Excellent).</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="KitchenQual">Kitchen Quality</label>
+                                <select id="KitchenQual" name="KitchenQual" required>
+                                    <option value="Ex">Excellent</option>
+                                    <option value="Gd" selected>Good</option>
+                                    <option value="TA">Average/Typical</option>
+                                    <option value="Fa">Fair</option>
+                                </select>
+                                <span class="input-desc">Quality rating of the kitchen space.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="CentralAir">Central Air Conditioning</label>
+                                <select id="CentralAir" name="CentralAir" required>
+                                    <option value="Y" selected>Yes</option>
+                                    <option value="N">No</option>
+                                </select>
+                                <span class="input-desc">Presence of central cooling system.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Bed / Bath & Garage -->
+                    <div class="form-section">
+                        <h3><span class="step-num">4</span> Capacity & Bathrooms</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="BedroomAbvGr">Bedrooms (Above Grade)</label>
+                                <select id="BedroomAbvGr" name="BedroomAbvGr" required>
+                                    <option value="1">1 Bedroom</option>
+                                    <option value="2">2 Bedrooms</option>
+                                    <option value="3" selected>3 Bedrooms</option>
+                                    <option value="4">4 Bedrooms</option>
+                                    <option value="5">5 Bedrooms</option>
+                                    <option value="6">6+ Bedrooms</option>
+                                </select>
+                                <span class="input-desc">Number of bedrooms above ground level.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="FullBath">Full Bathrooms</label>
+                                <select id="FullBath" name="FullBath" required>
+                                    <option value="1">1 Full Bath</option>
+                                    <option value="2" selected>2 Full Baths</option>
+                                    <option value="3">3 Full Baths</option>
+                                    <option value="4">4 Full Baths</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="HalfBath">Half Bathrooms</label>
+                                <select id="HalfBath" name="HalfBath" required>
+                                    <option value="0" selected>0 Half Baths</option>
+                                    <option value="1">1 Half Bath</option>
+                                    <option value="2">2 Half Baths</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="GarageCars">Garage Size (Car Capacity)</label>
+                                <select id="GarageCars" name="GarageCars" required>
+                                    <option value="0">No Garage</option>
+                                    <option value="1">1 Car</option>
+                                    <option value="2" selected>2 Cars</option>
+                                    <option value="3">3 Cars</option>
+                                    <option value="4">4 Cars</option>
+                                </select>
+                                <span class="input-desc">Garage area size measured in vehicles capacity.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="submit-btn">
+                        <span>Calculate Valuation</span>
+                        <div class="loader" id="loader"></div>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-column">
+                <div class="card result-card empty-state" id="result-card">
+                    
+                    <!-- Pre-prediction view -->
+                    <div class="result-placeholder" id="result-placeholder">
+                        <div class="icon-pulse">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H3a.75.75 0 01-.75-.75V3.75A.75.75 0 013 3z" />
+                            </svg>
+                        </div>
+                        <h3>Awaiting Input</h3>
+                        <p>Fill out the property specifications and click "Calculate Valuation" to run the regression model pipeline.</p>
+                    </div>
+
+                    <!-- Post-prediction view (hidden by default) -->
+                    <div class="result-display" id="result-display" style="display: none;">
+                        <h2 class="result-title">Estimated Market Value</h2>
+                        
+                        <div class="price-box">
+                            <span class="currency-symbol">$</span>
+                            <span class="price-value" id="pred-price">0</span>
+                            <span class="currency-code">USD</span>
+                        </div>
+
+                        <!-- Comparison Badge -->
+                        <div class="comparison-badge" id="diff-badge">
+                            <span class="badge-icon" id="badge-icon"></span>
+                            <span id="badge-text">...</span>
+                        </div>
+
+                        <div class="analysis-details">
+                            <div class="stat-row">
+                                <span class="stat-label">Neighborhood Average</span>
+                                <span class="stat-value" id="nh-avg-price">$0</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Neighborhood Name</span>
+                                <span class="stat-value" id="nh-name">---</span>
+                            </div>
+                        </div>
+
+                        <div class="feature-pills">
+                            <div class="pill">
+                                <span class="pill-label">Calculated Living Area</span>
+                                <span class="pill-val" id="pill-area">0 sq ft</span>
+                            </div>
+                            <div class="pill">
+                                <span class="pill-label">Property Age</span>
+                                <span class="pill-val" id="pill-age">0 Years</span>
+                            </div>
+                            <div class="pill">
+                                <span class="pill-label">Total Bathrooms</span>
+                                <span class="pill-val" id="pill-baths">0 Baths</span>
+                            </div>
+                            <div class="pill">
+                                <span class="pill-label">Score (Quality x Cond)</span>
+                                <span class="pill-val" id="pill-score">0</span>
+                            </div>
+                        </div>
+
+                        <div class="model-note">
+                            <svg viewBox="0 0 20 20" fill="currentColor" class="info-icon">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Model Pipeline loads model_metadata defaults for unspecified variables. Log RMSE score is ≈ 0.1118.</span>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- JS script -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
