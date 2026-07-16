@@ -1,9 +1,16 @@
 import os
 import json
 import joblib
+import logging
 import numpy as np
 import pandas as pd
 from flask import Flask, request, jsonify, render_template
+
+# Configure standard logging to console
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+)
 
 app = Flask(__name__)
 
@@ -18,16 +25,16 @@ metadata = None
 
 if os.path.exists(MODEL_PATH):
     model = joblib.load(MODEL_PATH)
-    print("Successfully loaded model pipeline.")
+    logging.info("Successfully loaded model pipeline.")
 else:
-    print(f"Warning: Model not found at {MODEL_PATH}")
+    logging.warning(f"Model not found at {MODEL_PATH}")
 
 if os.path.exists(METADATA_PATH):
     with open(METADATA_PATH, "r") as f:
         metadata = json.load(f)
-    print("Successfully loaded model metadata.")
+    logging.info("Successfully loaded model metadata.")
 else:
-    print(f"Warning: Metadata not found at {METADATA_PATH}")
+    logging.warning(f"Metadata not found at {METADATA_PATH}")
 
 # Hardcoded neighborhood average sale prices computed from training dataset
 NEIGHBORHOOD_AVERAGES = {
@@ -88,11 +95,15 @@ def home():
 def predict():
     try:
         if not model or not metadata:
+            logging.error("Model or metadata not loaded on server.")
             return jsonify({'error': 'Model or metadata not loaded on server.'}), 500
         
         user_input = request.json
         if not user_input:
+            logging.warning("Prediction endpoint called with empty payload.")
             return jsonify({'error': 'No input data provided.'}), 400
+        
+        logging.info(f"Prediction requested for neighborhood: {user_input.get('Neighborhood', 'unknown')}")
         
         # 1. Start with the baseline default record from metadata
         full_record = metadata['defaults'].copy()
@@ -141,11 +152,11 @@ def predict():
             'percent_diff': float(round(percent_diff, 1))
         }
         
+        logging.info(f"Prediction successful: ${response_data['predicted_price']} USD (diff vs average: {response_data['percent_diff']}%)")
         return jsonify(response_data)
         
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logging.error("Error occurred during prediction processing:", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

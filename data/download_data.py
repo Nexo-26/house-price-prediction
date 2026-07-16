@@ -4,7 +4,10 @@ import urllib.request
 train_url = "https://raw.githubusercontent.com/ankita1112/House-Prices-Advanced-Regression/master/train.csv"
 test_url = "https://raw.githubusercontent.com/ankita1112/House-Prices-Advanced-Regression/master/test.csv"
 
-data_dir = "e:/PIET_AI_Senior/data"
+# Resolve path relative to script directory
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+data_dir = SCRIPT_DIR
+
 os.makedirs(data_dir, exist_ok=True)
 
 try:
